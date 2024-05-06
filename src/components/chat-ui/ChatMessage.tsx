@@ -29,7 +29,7 @@ export const ChatMessage = ({ message, isLastIndex  }: IChatMessageProps & { isL
                 <Avatar shape="circle" className="mr-4 z-10">
                     <div className="bg-neutral text-neutral-content h-10 w-10">
                         {isBot ? (
-                           <img alt="bot" src="public/assets/images/logo.png"/>
+                            <img alt="bot" src="/assets/images/logo.png"/>
                         ) : message.userInfo?.firstName && message.userInfo?.lastName ? (
                             <span>{`${message.userInfo.firstName.charAt(
                                 0
