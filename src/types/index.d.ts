@@ -26,17 +26,13 @@ export type Conversations = Array<Conversation>;
 export interface IChatUIProps {
     isQuerying: boolean;
     onSubmit: (value) => void;
-    placeholder: string;
     disabled: boolean;
     conversation: Conversation;
-    customSubmitIcon?: ReactNode;
 }
 
 export interface IChatInputProps {
     disabled: boolean;
     onSubmit: (value) => void;
-    placeholder: string;
-    customSubmitIcon?: ReactNode;
 }
 
 export interface IChatConversationsProps {

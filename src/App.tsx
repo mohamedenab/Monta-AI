@@ -1,34 +1,25 @@
-import {useEffect, useState, useCallback} from "react";
-import {MessageRole} from "./enums/MessageRole";
-import {Conversations} from "./types";
-import {ChatUI} from "./components";
-import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
-import {faMailReply} from "@fortawesome/free-solid-svg-icons";
-import {ChatHistory} from "./components/chat-history/ChatHistory.tsx";
-import {Navabr} from "./components/Navabr.tsx";
+import React, { useCallback, useEffect, useState } from "react";
+import { MessageRole } from "./enums/MessageRole";
+import { Conversations, Message, User } from "./types";
+import { ChatUI } from "./components";
+import { ChatHistory } from "./components/chat-history/ChatHistory";
+import { Navabr } from "./components/Navabr";
+import { generateUniqueConversationId } from "./hooks/generateUniqueConversationId";
+import { convertNumberToWords } from "./hooks/convertNumberToWords";
 
-const TEST_USER_INFO = {firstName: "Mohamed", lastName: "Enab"};
+const TEST_USER_INFO: User = { firstName: "Mohamed", lastName: "Enab" };
 
-function App() {
-    const storedConversationsString = localStorage.getItem("chatConversations");
-    const storedConversations = storedConversationsString ? JSON.parse(storedConversationsString) : [];
+const App: React.FC = () => {
     const [isQuerying, setIsQuerying] = useState<boolean>(false);
     const [currentId, setCurrentId] = useState<number>();
-    const [visible, setVisible] = useState(false);
-    const toggleVisible = useCallback(() => {
-        setVisible(visible => !visible);
-    }, []);
-    const [chatConversations, setChatConversations] = useState<Conversations>(
-        storedConversations.length > 0 ? storedConversations : []
-    );
+    const [visible, setVisible] = useState<boolean>(false);
+    const [chatConversations, setChatConversations] = useState<Conversations>([]);
 
     useEffect(() => {
         const storedConversationsString = localStorage.getItem("chatConversations");
-        console.log(storedConversationsString);
         if (storedConversationsString) {
             setChatConversations(JSON.parse(storedConversationsString));
             setCurrentId(JSON.parse(storedConversationsString)[0].id);
-
         } else {
             const defaultConversationId = Math.floor(Math.random() * 100) + 2;
             const defaultConversation: Conversations = [{
@@ -46,115 +37,71 @@ function App() {
         }
     }, []);
 
-    const handleSubmit = useCallback(
-        (value: string) => {
-            setIsQuerying(true);
-            setChatConversations((conversations) => {
-                const updatedConversations = conversations.map((conversation) => {
-                    if (currentId === conversation.id) {
-                        const updatedMessages = [
-                            ...conversation.messages,
-                            {
-                                userInfo: TEST_USER_INFO,
-                                id: (conversation.messages.length + 1).toString(),
-                                role: MessageRole.USER,
-                                message: value,
-                            },
-                        ];
-                        return {
-                            ...conversation,
-                            messages: updatedMessages,
-                        };
-                    }
-                    return conversation;
-                });
-                localStorage.setItem("chatConversations", JSON.stringify(updatedConversations));
-                return updatedConversations;
-            });
+    const setNewMessage = useCallback((conversations: Conversations, role: MessageRole, message: string, userInfo?: User): Conversations => {
+        return conversations.map((conversation) => {
+            if (currentId !== conversation.id) {
+                return conversation;
+            }
+            const newMessage: Message = {
+                id: (conversation.messages.length + (role === MessageRole.ASSISTANT ? 2 : 1)).toString(),
+                role: role,
+                message: message,
+                ...(userInfo && { userInfo: userInfo })
+            };
+            const updatedMessages = [...conversation.messages, newMessage];
+            const updatedConversations = { ...conversation, messages: updatedMessages };
+            localStorage.setItem("chatConversations", JSON.stringify(updatedConversations));
+            return updatedConversations;
+        });
+    }, [currentId]);
 
-            setTimeout(() => {
-                setChatConversations((conversations) => {
-                    const updatedConversations = conversations.map((conversation) => {
-                        if (currentId === conversation.id) {
-                            // Add the assistant message after the timeout
-                            const updatedMessages = [
-                                ...conversation.messages,
-                                {
-                                    id: (conversation.messages.length + 2).toString(),
-                                    role: MessageRole.ASSISTANT,
-                                    message: "This is a mocked sample chat bot assistant response",
-                                },
-                            ];
-                            return {
-                                ...conversation,
-                                messages: updatedMessages,
-                            };
-                        }
-                        return conversation;
-                    });
-                    localStorage.setItem("chatConversations", JSON.stringify(updatedConversations));
-                    setIsQuerying(false);
-                    return updatedConversations;
-                });
-            }, 1000);
-        },
-        [currentId]
-    );
+    const handleSubmit = useCallback((value: string) => {
+        setIsQuerying(true);
+        setChatConversations((conversations) => {
+            return setNewMessage(conversations, MessageRole.USER, value, TEST_USER_INFO);
+        });
+
+        setTimeout(() => {
+            setChatConversations((conversations) => {
+                return setNewMessage(conversations, MessageRole.ASSISTANT, "This is a mocked sample chat bot assistant response");
+            });
+            setIsQuerying(false);
+        }, 1000);
+    }, [setNewMessage]);
+
     const createNewConversation = () => {
-        const newConversationId = generateUniqueConversationId();
+        const newConversationId = generateUniqueConversationId(chatConversations);
         const title = convertNumberToWords(chatConversations.length + 1);
 
         setChatConversations((conversations) => [
             {
                 id: newConversationId,
-                title: title,
+                title: title + ' Conversation',
                 messages: [],
             },
             ...conversations,
         ]);
         setCurrentId(newConversationId);
     };
-    const generateUniqueConversationId = (): number => {
-        let newId = Math.floor(Math.random() * 100) + 2; // Generate a random ID
-        while (chatConversations.some(conversation => conversation.id === newId)) {
-            newId = Math.floor(Math.random() * 100) + 2; // Generate a new ID
-        }
-        return newId;
-    };
-    const convertNumberToWords = (num: number): string => {
-        const ordinalNumbers = ["", "First", "Second", "Third", "Fourth", "Fifth", "Sixth", "Seventh", "Eighth", "Ninth"];
-        const tens = ["", "Ten", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"];
-        const teens = ["", "Eleventh", "Twelfth", "Thirteenth", "Fourteenth", "Fifteenth", "Sixteenth", "Seventeenth", "Eighteenth", "Nineteenth"];
-
-        if (num === 0) return "Zero";
-        if (num < 10) return ordinalNumbers[num];
-        if (num < 20) return teens[num - 10];
-        if (num < 100) return tens[Math.floor(num / 10)] + " " + ordinalNumbers[num % 10];
-        if (num < 1000) return ordinalNumbers[Math.floor(num / 100)] + " Hundred " + convertNumberToWords(num % 100);
-        return "";
-    };
 
     const currentConversation = chatConversations.find((conversation) => conversation.id === currentId);
 
     return (
         <div className="flex flex-col lg:flex-row">
-            <Navabr visible={visible}
-                    toggleVisible={toggleVisible}
-            />
+            <Navabr visible={visible} toggleVisible={() => setVisible(!visible)} />
             <ChatHistory
                 currentId={currentId ?? 0}
                 visible={visible}
-                toggleVisible={toggleVisible}
-                newConversation={createNewConversation}
+                toggleVisible={() => setVisible(!visible)}
+                createNewConversation={createNewConversation}
                 selectConversation={setCurrentId}
-                conversations={chatConversations}/>
+                conversations={chatConversations}
+            />
             <ChatUI
                 isQuerying={isQuerying}
                 onSubmit={handleSubmit}
-                placeholder="Type here to interact with this demo"
                 disabled={isQuerying}
                 conversation={currentConversation!}
-                customSubmitIcon={<FontAwesomeIcon icon={faMailReply}/>}
             />
         </div>
     );

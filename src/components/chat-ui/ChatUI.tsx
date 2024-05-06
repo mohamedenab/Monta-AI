@@ -7,8 +7,6 @@ export const ChatUI = ({
                            disabled,
                            conversation,
                            isQuerying,
-                           customSubmitIcon,
-                           placeholder,
                            onSubmit,
                        }: IChatUIProps) => {
     const chatConversationsContainerRef = useRef<HTMLDivElement>(null);
@@ -28,9 +26,7 @@ export const ChatUI = ({
             <div className="absolute bottom-12 left-0 w-full">
                 <ChatInput
                     disabled={disabled}
-                    customSubmitIcon={customSubmitIcon}
                     onSubmit={onSubmit}
-                    placeholder={placeholder}
                 />
             </div>
         </div>

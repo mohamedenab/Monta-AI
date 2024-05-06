@@ -5,14 +5,14 @@ import {faPenToSquare} from "@fortawesome/free-solid-svg-icons";
 import {Navabr} from "../Navabr.tsx";
 
 export const ChatHistory = ({
-                                currentId, conversations, newConversation, selectConversation, visible,
+                                currentId, conversations, createNewConversation, selectConversation, visible,
                                 toggleVisible
                             }: {
     currentId: number,
     visible: boolean,
     toggleVisible: () => void,
     conversations: Conversations,
-    newConversation: () => void,
+    createNewConversation: () => void,
     selectConversation: (value: number) => void
 }) => {
     const baseClass = "lg:text-base text-lg";
@@ -26,7 +26,7 @@ export const ChatHistory = ({
                            />
                        </Menu.Item>
                        <Menu.Item className={`${baseClass}`}>
-                           <p className="flex gap-3" onClick={newConversation}><FontAwesomeIcon
+                           <p className="flex gap-3" onClick={createNewConversation}><FontAwesomeIcon
                                icon={faPenToSquare}/> New Chat</p>
                        </Menu.Item>
                        {conversations.map((chatEntry) => (
